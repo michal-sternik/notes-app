@@ -20,8 +20,9 @@ export interface TaskType {
 }
 
 export interface TaskProps {
-    mode: TaskStatus;
+    modeStatus: TaskStatus;
     task?: TaskType;
     onAddTask?: (newTask: TaskType) => void;
     onUpdateTask?: (updatedTask: TaskType) => void;
+    onDeleteTask?: (taskId: number) => void;
 }

@@ -9,7 +9,7 @@ import { changeColor } from '../../Redux/colorSlice'
 const ToolsBar = () => {
 
     //some example colors
-    const proposedColors: string[] = ['#ff9063', '#f0d075', '#0dccfb', '#be8dff', '#daf383']
+    const proposedColors = useSelector((state: RootState) => state.color.proposedColors);
 
     const selectedColor = useSelector((state: RootState) => state.color.selectedColor);
     const dispatch = useAppDispatch();

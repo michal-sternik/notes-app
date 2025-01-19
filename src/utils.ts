@@ -9,3 +9,5 @@ export const formatDate = (date: Date) => {
         hour12: false,
     })
 };
+
+export const validateNoteField = (field: string) => field.trim() === "";

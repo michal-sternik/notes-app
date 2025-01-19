@@ -10,3 +10,13 @@
     align-items: center;
     padding: 30px;
 }
+
+@media (max-width: 768px) {
+    .toolsBar {
+        flex-direction: row;
+        justify-content: space-evenly;
+        padding: 15px;
+        gap: 15px;
+        width: 100%;
+    }
+}

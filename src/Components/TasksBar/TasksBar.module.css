@@ -33,3 +33,10 @@
     gap: 40px;
     overflow: auto;
 }
+
+.tasksTitleAndRandomTasksButtonBar {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+    align-items: center;
+}

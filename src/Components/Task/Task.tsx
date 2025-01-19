@@ -9,22 +9,26 @@ import EditIcon from '@mui/icons-material/Edit';
 import CheckIcon from '@mui/icons-material/Check';
 import UndoIcon from '@mui/icons-material/Undo';
 import { TaskProps, TaskStatus, TaskType } from '../../types'
-import { formatDate } from '../../utils'
+import { formatDate, validateNoteField } from '../../utils'
 
 
 
-const Task = ({ mode: initialMode, task, onAddTask, onUpdateTask }: TaskProps) => {
+const Task = ({ modeStatus, task, onAddTask, onUpdateTask, onDeleteTask }: TaskProps) => {
 
     const selectedColor = useSelector((state: RootState) => state.color.selectedColor);
     const newTaskColor = task?.color || selectedColor;
+
     const [currentDate, setCurrentDate] = useState<string>(task?.addedDate ? formatDate(new Date(task!.addedDate)) : "");
+
     const [title, setTitle] = useState<string>(task?.title ? task!.title : "");
     const [description, setDescription] = useState<string>(task?.description ? task!.description : "");
     const [titleEmpty, setTitleEmpty] = useState(false);
     const [descriptionEmpty, setDescriptionEmpty] = useState(false);
-    const [mode, setMode] = useState<TaskStatus>(initialMode);
+
+    const [mode, setMode] = useState<TaskStatus>(modeStatus);
 
 
+    //current date and time while creating new task
     useEffect(() => {
         if (mode === TaskStatus.NEW) {
             const updateDate = () => {
@@ -39,30 +43,44 @@ const Task = ({ mode: initialMode, task, onAddTask, onUpdateTask }: TaskProps) =
             //cleanup function
             return () => clearInterval(interval);
         }
-    }, []);
+    });
 
 
     const handleAddTask = () => {
-        if (title.trim() === "" || description.trim() === "") {
-            return
-        }
-        else {
+        if (validateNoteField(title) || validateNoteField(description)) return;
 
+        const newTask: TaskType = {
+            taskId: -1, //placeholder, will be replaced in onAddTask function after maxId calculation
+            title: title.trim(),
+            description: description.trim(),
+            addedDate: new Date(),
+            color: newTaskColor
+        };
 
-            const newTask: TaskType = {
-                taskId: -1,
-                title: title.trim(),
-                description: description.trim(),
-                addedDate: new Date(),
-                color: newTaskColor
-            };
+        onAddTask!(newTask);
 
-            if (onAddTask) onAddTask(newTask);
+        setTitle("")
+        setDescription("")
 
-            setTitle("")
-            setDescription("")
-        }
     }
+
+    const handleSave = () => {
+        if (validateNoteField(title) || validateNoteField(description)) return;
+
+
+        //task is not undefined, because we're in EDIT mode, so after the validation
+        //there exists for sure task object with all props needed
+        const updatedTask = {
+            ...task!,
+            title: title.trim(),
+            description: description.trim(),
+        };
+        onUpdateTask!(updatedTask);
+
+
+        setMode(TaskStatus.DISPLAY);
+    };
+
     const handleClearInput = () => {
         setTitle("")
         setDescription("")
@@ -72,180 +90,151 @@ const Task = ({ mode: initialMode, task, onAddTask, onUpdateTask }: TaskProps) =
         setMode(TaskStatus.EDIT);
     };
 
-    const handleSave = () => {
-        if (title.trim() === "" || description.trim() === "") {
-            return
-        }
-
-        if (task) {
-            const updatedTask = {
-                ...task,
-                title: title.trim(),
-                description: description.trim(),
-            };
-            if (onUpdateTask) onUpdateTask(updatedTask);
-        }
-
-        setMode(TaskStatus.DISPLAY);
-    };
 
     const handleCancel = () => {
         setTitle(task!.title);
         setDescription(task!.description);
 
     };
+    const handleDelete = () => {
+        onDeleteTask!(task!.taskId);
+    };
 
-    const iconButtonStyle: SxProps =
-    {
-        backgroundColor: 'grey',
-        color: 'white',
-        '&:hover': {
-            backgroundColor: 'black',
-        },
-        borderRadius: '50%',
 
-    }
+    const renderIconButton = (IconComponent: React.ElementType, onClick: () => void, label: string) => {
 
-    if (mode === TaskStatus.DISPLAY && task) {
+        const iconButtonStyle: SxProps =
+        {
+            backgroundColor: 'grey',
+            color: 'white',
+            '&:hover': {
+                backgroundColor: 'black',
+            },
+            borderRadius: '50%',
+
+        }
         return (
-            <div
-                className={classes.displayTask}
-                style={{ backgroundColor: task.color }}
-
+            <IconButton
+                aria-label={label}
+                sx={iconButtonStyle}
+                onClick={onClick}
             >
+                <IconComponent />
+            </IconButton>
+        )
+    };
 
-                <Typography>{task.title}</Typography>
-                <Divider variant="middle" />
-
-                <Box
-                    sx={{
-                        maxHeight: '150px',
-                        overflow: 'auto',
-                        width: '100%',
-                        padding: '8px',
-                        overflowWrap: 'anywhere',
-
-                    }}
-                >
-                    <Typography variant="body1" color="textSecondary">
-                        {task.description}
-                    </Typography>
-                </Box>
-
-                <div className={classes.displayTaskFooter}>
-                    <Typography variant="caption" display="block" gutterBottom>
-                        {formatDate(new Date(task.addedDate))}
-                    </Typography>
-                    <div className={classes.taskFooterButtons}>
-                        <IconButton
-                            aria-label="delete"
-                            sx={iconButtonStyle}
-                            onClick={() => handleClearInput()}
-                        >
-                            <DeleteIcon />
-                        </IconButton>
-                        <IconButton
-                            aria-label="edit"
-                            sx={iconButtonStyle}
-                            // type='submit'
-                            onClick={() => handleEdit()}
-                        >
-                            <EditIcon />
-                        </IconButton>
-                    </div>
-                </div>
-            </div>
-        );
-    }
 
     return (
         <div
-            className={classes.newTask}
-            style={{ backgroundColor: newTaskColor }}
-
+            className={
+                classes.task
+            }
+            style={{
+                backgroundColor: mode === TaskStatus.DISPLAY && task ? task.color : newTaskColor,
+            }}
         >
 
-            <TextField
-                id="standard-basic"
-                label="Title"
-                variant="standard"
-                placeholder="Cook vegetables..."
-                required
-                value={title}
-                error={titleEmpty}
-                helperText={
-                    titleEmpty ? "Title cannot be empty." : ""
+            {mode === TaskStatus.DISPLAY && task ? (
+                // display task mode
+                <>
+                    <Typography>{task.title}</Typography>
+                    <Divider variant="middle" />
+                    <Box
+                        sx={{
+                            maxHeight: '150px',
+                            overflow: 'auto',
+                            width: '100%',
+                            padding: '8px',
+                            overflowWrap: 'anywhere',
+                        }}
+                    >
+                        <Typography variant="body1" color="textSecondary">
+                            {task.description}
+                        </Typography>
+                    </Box>
+                </>
+                // new task/edit mode
+            ) : (
+                <>
+
+                    <TextField
+                        id="standard-basic"
+                        label="Title"
+                        variant="standard"
+                        placeholder="Cook vegetables..."
+                        required
+                        value={title}
+                        error={titleEmpty}
+                        helperText={titleEmpty ? "Title cannot be empty." : ""}
+                        onChange={(e) => {
+                            setTitle(e.target.value);
+                            setTitleEmpty(e.target.value.trim() === "");
+                        }}
+                    />
+
+                    <TextField
+                        id="standard-textarea"
+                        label="Description"
+                        placeholder="Peel carrot, onion..."
+                        multiline
+                        variant="standard"
+                        rows={3}
+                        required
+                        value={description}
+                        error={descriptionEmpty}
+                        helperText={descriptionEmpty ? "Description cannot be empty." : ""}
+                        onChange={(e) => {
+                            setDescription(e.target.value);
+                            setDescriptionEmpty(e.target.value.trim() === "");
+                        }}
+                    />
+                </>
+            )}
+
+            {/* footer for every TaskStatus is the same, different buttons */}
+            <div
+                className={
+                    classes.taskFooter
                 }
-                onChange={(e) => {
-                    setTitle(e.target.value)
-                    //validation
-                    if (e.target.value.trim() === "") {
-                        setTitleEmpty(true)
-                    }
-                    else {
-                        setTitleEmpty(false)
-                    }
-
-                }}
-            />
-
-            <TextField
-                id="standard-textarea"
-                label="Description"
-                placeholder="Peel carrot, onion..."
-                multiline
-                variant="standard"
-                rows={3}
-                required
-                value={description}
-                error={descriptionEmpty}
-                helperText={
-                    descriptionEmpty ? "Description cannot be empty." : ""
-                }
-                onChange={(e) => {
-                    setDescription(e.target.value)
-                    //validation
-                    if (e.target.value.trim() === "") {
-                        setDescriptionEmpty(true)
-                    }
-                    else {
-                        setDescriptionEmpty(false)
-                    }
-                }}
-            />
-
-            <div className={classes.newTaskFooter}>
+            >
                 <Typography variant="caption" display="block" gutterBottom>
-                    {currentDate}
+                    {mode === TaskStatus.DISPLAY && task
+                        ? formatDate(new Date(task.addedDate))
+                        : currentDate}
                 </Typography>
                 <div className={classes.taskFooterButtons}>
-                    <IconButton
-                        aria-label="delete"
-                        sx={iconButtonStyle}
-                        onClick={() =>
-                            mode === TaskStatus.EDIT ?
-                                handleCancel()
-                                :
-                                handleClearInput()
-                        }
-                    >
-                        {mode === TaskStatus.EDIT ? <UndoIcon /> : <DeleteIcon />}
-                    </IconButton>
-                    <IconButton
-                        aria-label="add"
-                        sx={iconButtonStyle}
-
-                        onClick={() => mode === TaskStatus.EDIT ?
-                            handleSave()
-                            :
-                            handleAddTask()}
-                    >
-                        {mode === TaskStatus.EDIT ? <CheckIcon /> : <AddIcon />}
-                    </IconButton>
+                    {mode === TaskStatus.DISPLAY && task ? (
+                        // display mode
+                        <>
+                            {renderIconButton(DeleteIcon, handleDelete, "delete")}
+                            {renderIconButton(EditIcon, handleEdit, "edit")}
+                        </>
+                    ) : (
+                        <>
+                            {renderIconButton(
+                                //new mode/edit mode
+                                mode === TaskStatus.EDIT ? UndoIcon : DeleteIcon,
+                                () =>
+                                    mode === TaskStatus.EDIT
+                                        ? handleCancel()
+                                        : handleClearInput(),
+                                mode === TaskStatus.EDIT ? "cancel" : "delete"
+                            )}
+                            {renderIconButton(
+                                mode === TaskStatus.EDIT ? CheckIcon : AddIcon,
+                                () =>
+                                    mode === TaskStatus.EDIT
+                                        ? handleSave()
+                                        : handleAddTask(),
+                                mode === TaskStatus.EDIT ? "save" : "add"
+                            )}
+                        </>
+                    )}
                 </div>
             </div>
         </div>
+    );
 
-    )
 }
 export default Task
