@@ -1,61 +1,49 @@
-import { useEffect, useState } from 'react'
 import classes from "./TasksBar.module.css"
-import { TaskType, TaskStatus } from '../../types'
+import { TaskStatus } from '../../types'
 import Task from '../Task/Task';
+import { useTasks } from '../../hooks/useTasks';
+import { Chip } from "@mui/material";
 
 
 
 const TasksBar = () => {
 
-    const [tasks, setTasks] = useState<TaskType[]>([]);
+    const { tasks, addTask, updateTask, deleteTask, generateRandomTasks } = useTasks();
 
-
-    useEffect(() => {
-        const tasks = JSON.parse(localStorage.getItem("tasks") || "[]");
-        setTasks(tasks);
-    }, []);
-
-
-    const addTask = (newTask: TaskType) => {
-
-        let maxId = 0
-        if (tasks.length > 0) {
-            const tasksIds: number[] = tasks.map(task => task.taskId)
-            maxId = Math.max(...tasksIds);
-        }
-
-        const newTaskWithId = { ...newTask, taskId: maxId + 1 };
-
-        const updatedTasks = [...tasks, newTaskWithId];
-        setTasks(updatedTasks);
-        localStorage.setItem("tasks", JSON.stringify(updatedTasks));
-    };
-
-    const updateTask = (updatedTask: TaskType) => {
-        const updatedTasks = tasks.map((t) =>
-            t.taskId === updatedTask.taskId ? updatedTask : t
-        );
-        setTasks(updatedTasks);
-        localStorage.setItem("tasks", JSON.stringify(updatedTasks));
-    };
 
     return (
         <div className={classes.tasksBar}>
-            <h1 className={classes.h1}>
-                Manage your notes
-            </h1>
+            <div className={classes.tasksTitleAndRandomTasksButtonBar}>
+                <h1 className={classes.h1}>
+                    Manage your notes
+                </h1>
+                <Chip
+                    label="Generate example tasks"
+                    variant="filled"
+                    onClick={generateRandomTasks}
+                    sx={{
+                        backgroundColor: 'pink',
+                        height: 'auto',
+                        minHeight: '30px',
+                        '& .MuiChip-label': {
+                            // display: 'block',
+                            whiteSpace: 'normal',
+                        },
+                    }} />
+            </div>
             <hr
                 className={classes.hr}
             />
             <div className={classes.taskContainer}>
-                <Task mode={TaskStatus.NEW} onAddTask={addTask} />
+                <Task modeStatus={TaskStatus.NEW} onAddTask={addTask} />
 
                 {tasks.map((task) => (
                     <Task
                         key={task.taskId}
-                        mode={TaskStatus.DISPLAY}
+                        modeStatus={TaskStatus.DISPLAY}
                         task={task}
                         onUpdateTask={updateTask}
+                        onDeleteTask={deleteTask}
                     />
                 ))}
 

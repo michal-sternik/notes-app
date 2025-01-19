@@ -9,3 +9,11 @@
 
 
 }
+
+@media (max-width: 768px) {
+    .rootLayoutDesign {
+        flex-direction: column;
+        padding: 15px;
+        gap: 15px;
+    }
+}
