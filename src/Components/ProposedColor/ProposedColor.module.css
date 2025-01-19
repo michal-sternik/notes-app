@@ -1,0 +1,18 @@
+.colorItem {
+    border-radius: 50%;
+    height: 48px;
+    width: 48px;
+    list-style: none;
+    cursor: pointer;
+    transition: 300ms;
+}
+
+.colorItem:hover {
+    height: 60px;
+    width: 60px;
+}
+
+.colorItemActive {
+    height: 60px;
+    width: 60px;
+}
