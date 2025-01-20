@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import { useEffect } from 'react'
 
 import classes from "./ToolsBar.module.css"
 import ProposedColor from '../ProposedColor/ProposedColor'
@@ -19,7 +19,7 @@ const ToolsBar = () => {
             //first from list
             dispatch(changeColor(proposedColors[0]));
         }
-    }, []);
+    });
 
     const changeSelectedColor = (color: string) => {
         dispatch(changeColor(color));
