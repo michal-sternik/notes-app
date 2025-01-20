@@ -53,7 +53,7 @@ const Task = ({ modeStatus, task, onAddTask, onUpdateTask, onDeleteTask }: TaskP
         if (validateNoteField(title) || validateNoteField(description)) return;
 
         const newTask: TaskType = {
-            taskId: -1, //placeholder, will be replaced in onAddTask function after maxId calculation
+            taskId: "-1", //placeholder, will be replaced in onAddTask function after maxId calculation
             title: title.trim(),
             description: description.trim(),
             addedDate: new Date(),
