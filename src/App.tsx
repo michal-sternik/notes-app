@@ -1,6 +1,6 @@
 
 import './App.css'
-import RootLayout from './RootLayout/RootLayout'
+import RootLayout from './Components/RootLayout/RootLayout'
 import { Provider } from 'react-redux';
 import { store } from './Redux/store';
 

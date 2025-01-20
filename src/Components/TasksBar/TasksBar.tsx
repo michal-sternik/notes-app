@@ -1,14 +1,36 @@
 import classes from "./TasksBar.module.css"
-import { TaskStatus } from '../../types'
+import { SortTypeEnum, TaskStatus, TaskType } from '../../types'
 import Task from '../Task/Task';
-import { useTasks } from '../../hooks/useTasks';
-import { Chip } from "@mui/material";
+import useTasks from '../../hooks/useTasks';
+import useTaskSorting from "../../hooks/useTaskSorting";
+import usePagination from "../../hooks/usePagination";
+import useTaskFiltering from "../../hooks/useTaskFiltering";
+import { Chip, Pagination, ToggleButton, ToggleButtonGroup } from "@mui/material";
+import { chipStyle, toggleButtonStyle } from './TaskBarMuiStyle';
+import { ArrowUpward, ArrowDownward } from "@mui/icons-material";
 
 
 
 const TasksBar = () => {
 
+    const MAX_ITEMS_PER_PAGE = 9;
+
     const { tasks, addTask, updateTask, deleteTask, generateRandomTasks } = useTasks();
+
+    const { sortBy, handleSort, sortedTasks } = useTaskSorting(tasks);
+    const { page, setPage, pagesCount, handlePageChange, paginatedTasks } = usePagination(sortedTasks(), MAX_ITEMS_PER_PAGE);
+    const { filterOption, handleFilterChange } = useTaskFiltering(setPage);
+
+
+    const getSortIcon = (sortType: SortTypeEnum) => {
+        if (!sortBy || sortBy.type !== sortType) return undefined;
+        return sortBy.ascending ? (
+            <ArrowUpward sx={{ fill: 'white', }} />
+        ) : (
+            <ArrowDownward sx={{ fill: 'white', }} />
+        );
+    };
+
 
 
     return (
@@ -22,14 +44,68 @@ const TasksBar = () => {
                     variant="filled"
                     onClick={generateRandomTasks}
                     sx={{
-                        backgroundColor: 'pink',
+                        backgroundColor: 'rgb(243, 136, 175);',
+                        color: 'white',
                         height: 'auto',
                         minHeight: '30px',
                         '& .MuiChip-label': {
                             // display: 'block',
                             whiteSpace: 'normal',
                         },
+                        '&:hover': {
+                            backgroundColor: 'rgb(230, 120, 160)', // Lekko ciemniejszy kolor tła na hover
+                        },
                     }} />
+            </div>
+
+            <div className={classes.tasksSortingAndFiltering}>
+                <p className={classes.p}> Sort by: </p>
+                <div className={classes.tasksSortingAndFilteringButtons}>
+                    <Chip
+                        onClick={() => handleSort(SortTypeEnum.TITLE)}
+                        size="small"
+                        label={`Title`}
+                        icon={getSortIcon(SortTypeEnum.TITLE)}
+                        sx={chipStyle}
+
+                    />
+                    <Chip
+                        onClick={() => handleSort(SortTypeEnum.DESCRIPTION)}
+                        size="small"
+                        label={`Description`}
+                        icon={getSortIcon(SortTypeEnum.DESCRIPTION)}
+                        sx={chipStyle}
+                    />
+                    <Chip
+                        onClick={() => handleSort(SortTypeEnum.ADDEDDATE)}
+                        size="small"
+                        label={`Added date`}
+                        icon={getSortIcon(SortTypeEnum.ADDEDDATE)}
+                        sx={chipStyle}
+                    />
+                </div>
+                <p className={classes.p}> Filter: </p>
+                <ToggleButtonGroup
+                    value={filterOption}
+                    exclusive
+                    onChange={handleFilterChange}
+                    aria-label="Filter options"
+
+                >
+                    <ToggleButton
+                        value="pagination"
+                        sx={toggleButtonStyle}
+                    >
+                        Pagination
+                    </ToggleButton>
+                    <ToggleButton
+                        value="full-list"
+                        sx={toggleButtonStyle}
+                    >
+                        Full-List
+                    </ToggleButton>
+                </ToggleButtonGroup>
+
             </div>
             <hr
                 className={classes.hr}
@@ -37,21 +113,40 @@ const TasksBar = () => {
             <div className={classes.taskContainer}>
                 <Task modeStatus={TaskStatus.NEW} onAddTask={addTask} />
 
-                {tasks.map((task) => (
-                    <Task
-                        key={task.taskId}
-                        modeStatus={TaskStatus.DISPLAY}
-                        task={task}
-                        onUpdateTask={updateTask}
-                        onDeleteTask={deleteTask}
-                    />
-                ))}
 
+
+                {filterOption === 'pagination' ?
+                    tasks && paginatedTasks().map((task) => (
+                        <Task
+                            key={task.taskId}
+                            modeStatus={TaskStatus.DISPLAY}
+                            task={task}
+                            onUpdateTask={updateTask}
+                            onDeleteTask={deleteTask}
+                        />
+                    ))
+                    :
+                    tasks && sortedTasks().map((task: TaskType) => (
+                        <Task
+                            key={task.taskId}
+                            modeStatus={TaskStatus.DISPLAY}
+                            task={task}
+                            onUpdateTask={updateTask}
+                            onDeleteTask={deleteTask}
+                        />
+                    ))}
 
 
 
             </div>
-        </div>
+
+            {filterOption === 'pagination' ? (
+                <div className={classes.paginationStyle}>
+                    <Pagination count={pagesCount} page={page} onChange={handlePageChange} />
+                </div>
+            ) : null}
+
+        </div >
     )
 }
 

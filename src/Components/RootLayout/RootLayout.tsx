@@ -1,5 +1,5 @@
-import ToolsBar from '../Components/ToolsBar/ToolsBar'
-import TasksBar from '../Components/TasksBar/TasksBar'
+import ToolsBar from '../ToolsBar/ToolsBar'
+import TasksBar from '../TasksBar/TasksBar'
 import classes from "./RootLayout.module.css"
 
 

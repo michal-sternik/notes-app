@@ -26,3 +26,14 @@ export interface TaskProps {
     onUpdateTask?: (updatedTask: TaskType) => void;
     onDeleteTask?: (taskId: number) => void;
 }
+
+export interface SortType {
+    type: SortTypeEnum;
+    ascending: boolean;
+}
+
+export enum SortTypeEnum {
+    TITLE,
+    DESCRIPTION,
+    ADDEDDATE
+}

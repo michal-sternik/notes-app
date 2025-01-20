@@ -7,16 +7,23 @@
     border-radius: 20px;
     box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
     padding: 30px;
-    gap: 30px;
+    gap: 25px;
+    position: relative
 }
 
 .h1 {
-    color: rgb(240, 149, 182);
+    color: rgb(243, 136, 175);
+}
+
+.p {
+    color: rgb(243, 136, 175);
+    font-weight: 600;
 }
 
 .hr {
-    color: rgb(240, 149, 182);
-    background-color: rgb(240, 149, 182);
+    color: rgb(243, 136, 175);
+    ;
+    background-color: rgb(243, 136, 175);
     height: 3px;
     border: 0;
     border-radius: 10px;
@@ -39,4 +46,38 @@
     flex-direction: row;
     gap: 20px;
     align-items: center;
+}
+
+
+.tasksSortingAndFiltering {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+    align-items: center;
+}
+
+.tasksSortingAndFilteringButtons {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+
+}
+
+.paginationStyle {
+    position: absolute;
+    bottom: 5px;
+    left: 0;
+    right: 0;
+    margin-inline: auto;
+    width: fit-content;
+}
+
+@media (max-width: 768px) {
+    .tasksSortingAndFiltering {
+        flex-direction: column;
+        justify-content: space-evenly;
+        padding: 15px;
+        gap: 15px;
+        width: 100%;
+    }
 }

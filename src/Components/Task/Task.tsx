@@ -27,6 +27,9 @@ const Task = ({ modeStatus, task, onAddTask, onUpdateTask, onDeleteTask }: TaskP
 
     const [mode, setMode] = useState<TaskStatus>(modeStatus);
 
+    const [deleteClicked, setDeleteClicked] = useState(false);
+
+
 
     //current date and time while creating new task
     useEffect(() => {
@@ -96,23 +99,35 @@ const Task = ({ modeStatus, task, onAddTask, onUpdateTask, onDeleteTask }: TaskP
         setDescription(task!.description);
 
     };
+
+    //delete animation
+    const fadeOut = (cb: () => void) => {
+        setDeleteClicked(true)
+        setTimeout(() => cb(), 300);
+    }
     const handleDelete = () => {
         onDeleteTask!(task!.taskId);
+        setDeleteClicked(true)
     };
+
 
 
     const renderIconButton = (IconComponent: React.ElementType, onClick: () => void, label: string) => {
 
         const iconButtonStyle: SxProps =
         {
-            backgroundColor: 'grey',
-            color: 'white',
-            '&:hover': {
-                backgroundColor: 'black',
+            color: "rgb(243, 136, 175)",
+            backgroundColor: "white",
+
+
+            "&:hover": {
+                color: "white",
+                backgroundColor: "rgb(230, 120, 160)",
             },
             borderRadius: '50%',
 
         }
+
         return (
             <IconButton
                 aria-label={label}
@@ -132,6 +147,7 @@ const Task = ({ modeStatus, task, onAddTask, onUpdateTask, onDeleteTask }: TaskP
             }
             style={{
                 backgroundColor: mode === TaskStatus.DISPLAY && task ? task.color : newTaskColor,
+                opacity: deleteClicked ? 0 : 1, transition: 'opacity 0.3s ease-out',
             }}
         >
 
@@ -207,7 +223,7 @@ const Task = ({ modeStatus, task, onAddTask, onUpdateTask, onDeleteTask }: TaskP
                     {mode === TaskStatus.DISPLAY && task ? (
                         // display mode
                         <>
-                            {renderIconButton(DeleteIcon, handleDelete, "delete")}
+                            {renderIconButton(DeleteIcon, () => fadeOut(() => handleDelete()), "delete")}
                             {renderIconButton(EditIcon, handleEdit, "edit")}
                         </>
                     ) : (

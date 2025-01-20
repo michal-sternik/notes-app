@@ -22,7 +22,7 @@ const cookingTasks = [
 ];
 
 
-export const useTasks = () => {
+const useTasks = () => {
     const [tasks, setTasks] = useState<TaskType[]>([]);
     const proposedColors = useSelector((state: RootState) => state.color.proposedColors);
 
@@ -38,7 +38,7 @@ export const useTasks = () => {
 
     const addTask = (newTask: TaskType) => {
         const newTaskWithId: TaskType = { ...newTask, taskId: getNextTaskId(tasks) };
-        const updatedTasks = [...tasks, newTaskWithId];
+        const updatedTasks = [newTaskWithId, ...tasks];
         setTasks(updatedTasks);
         localStorage.setItem("tasks", JSON.stringify(updatedTasks));
     };
@@ -61,7 +61,7 @@ export const useTasks = () => {
         const currentTasks = [...tasks];
         let nextTaskId = getNextTaskId(currentTasks);
 
-        const newTasks = Array.from({ length: 5 }, (_, idx) => {
+        const newTasks = Array.from({ length: 5 }, () => {
             const randomIndex = Math.floor(Math.random() * cookingTasks.length);
             const randomColor = proposedColors[Math.floor(Math.random() * proposedColors.length)];
             const { title, description } = cookingTasks[randomIndex];
@@ -81,3 +81,4 @@ export const useTasks = () => {
 
     return { tasks, addTask, updateTask, deleteTask, generateRandomTasks };
 };
+export default useTasks
