@@ -12,7 +12,7 @@ export interface ProposedColorProps {
 }
 
 export interface TaskType {
-    taskId: number,
+    taskId: string,
     title: string;
     description: string;
     addedDate: Date;
@@ -24,7 +24,7 @@ export interface TaskProps {
     task?: TaskType;
     onAddTask?: (newTask: TaskType) => void;
     onUpdateTask?: (updatedTask: TaskType) => void;
-    onDeleteTask?: (taskId: number) => void;
+    onDeleteTask?: (taskId: string) => void;
 }
 
 export interface SortType {

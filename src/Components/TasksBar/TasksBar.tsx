@@ -5,9 +5,10 @@ import useTasks from '../../hooks/useTasks';
 import useTaskSorting from "../../hooks/useTaskSorting";
 import usePagination from "../../hooks/usePagination";
 import useTaskFiltering from "../../hooks/useTaskFiltering";
-import { Chip, Pagination, ToggleButton, ToggleButtonGroup } from "@mui/material";
+import { Chip, CircularProgress, Pagination, ToggleButton, ToggleButtonGroup } from "@mui/material";
 import { chipStyle, toggleButtonStyle } from './TaskBarMuiStyle';
 import { ArrowUpward, ArrowDownward } from "@mui/icons-material";
+import { useState } from "react";
 
 
 
@@ -20,7 +21,16 @@ const TasksBar = () => {
     const { sortBy, handleSort, sortedTasks } = useTaskSorting(tasks);
     const { page, setPage, pagesCount, handlePageChange, paginatedTasks } = usePagination(sortedTasks(), MAX_ITEMS_PER_PAGE);
     const { filterOption, handleFilterChange } = useTaskFiltering(setPage);
+    const [isLoading, setIsLoading] = useState(false);
 
+    const showLoadingState = async (fn: () => Promise<void>) => {
+        setIsLoading(true);
+        try {
+            await fn();
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const getSortIcon = (sortType: SortTypeEnum) => {
         if (!sortBy || sortBy.type !== sortType) return undefined;
@@ -31,8 +41,6 @@ const TasksBar = () => {
         );
     };
 
-
-
     return (
         <div className={classes.tasksBar}>
             <div className={classes.tasksTitleAndRandomTasksButtonBar}>
@@ -40,9 +48,9 @@ const TasksBar = () => {
                     Manage your notes
                 </h1>
                 <Chip
-                    label="Generate example tasks"
+                    label={isLoading ? <CircularProgress size={20} sx={{ color: 'white' }} /> : "Generate example tasks"}
                     variant="filled"
-                    onClick={generateRandomTasks}
+                    onClick={() => showLoadingState(generateRandomTasks)}
                     sx={{
                         backgroundColor: 'rgb(243, 136, 175);',
                         color: 'white',

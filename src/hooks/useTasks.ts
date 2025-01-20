@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react';
 import { TaskType } from '../types';
 import { useSelector } from 'react-redux';
 import { RootState } from '../Redux/store';
+import { addDoc, deleteDoc, getDocs, query, updateDoc } from 'firebase/firestore';
+import { collection, orderBy, doc } from 'firebase/firestore';
+import { firestore } from "../firebase"
 
 const cookingTasks = [
     { title: "Prepare chicken", description: "Take chicken off the fridge, then wash it." },
@@ -27,58 +30,90 @@ const useTasks = () => {
     const proposedColors = useSelector((state: RootState) => state.color.proposedColors);
 
     useEffect(() => {
-        const storedTasks = JSON.parse(localStorage.getItem("tasks") || "[]");
-        setTasks(storedTasks);
+        // debugger
+        const fetchTasks = async () => {
+            const taskQuery = query(collection(firestore, "tasks"), orderBy("addedDate", "desc"));
+            const querySnapshot = await getDocs(taskQuery);
+
+            const fetchedTasks = querySnapshot.docs.map((doc): TaskType => {
+                const data = doc.data();
+                return {
+                    taskId: doc.id,
+                    title: data.title,
+                    description: data.description,
+                    addedDate: data.addedDate ? data.addedDate.toDate() : new Date(),
+                    color: data.color,
+                } as TaskType;
+            }) as TaskType[];
+
+            setTasks(fetchedTasks);
+        };
+
+        fetchTasks();
     }, []);
 
-    const getNextTaskId = (tasks: TaskType[]): number => {
-        const maxId = tasks.length > 0 ? Math.max(...tasks.map((task) => task.taskId)) : 0;
-        return maxId + 1;
+
+    //uzywamy typu Omit, czyli dla naszego obiektu nie podajemy id, jest ono generowane przez firebase, dopiero potem sobie je pobieramy i przypisujemy do kolecji
+    const addTask = async (newTask: Omit<TaskType, "taskId">) => {
+        try {
+            const docRef = await addDoc(collection(firestore, "tasks"), {
+                title: newTask.title,
+                description: newTask.description,
+                addedDate: newTask.addedDate || new Date(),
+                color: newTask.color,
+            });
+
+            const newTaskWithId: TaskType = { ...newTask, taskId: docRef.id };
+            const updatedTasks = [newTaskWithId, ...tasks];
+            setTasks(updatedTasks);
+        } catch (error) {
+            console.error("Error adding task:", error);
+        }
     };
 
-    const addTask = (newTask: TaskType) => {
-        const newTaskWithId: TaskType = { ...newTask, taskId: getNextTaskId(tasks) };
-        const updatedTasks = [newTaskWithId, ...tasks];
-        setTasks(updatedTasks);
-        localStorage.setItem("tasks", JSON.stringify(updatedTasks));
+    const updateTask = async (updatedTask: TaskType) => {
+        const taskDocRef = doc(firestore, "tasks", updatedTask.taskId);
+
+        await updateDoc(taskDocRef, {
+            title: updatedTask.title,
+            description: updatedTask.description,
+            addedDate: updatedTask.addedDate,
+            color: updatedTask.color,
+        });
+
+        setTasks(tasks.map(task => task.taskId === updatedTask.taskId ? updatedTask : task));
     };
 
-    const updateTask = (updatedTask: TaskType) => {
-        const updatedTasks = tasks.map(task =>
-            task.taskId === updatedTask.taskId ? updatedTask : task
-        );
-        setTasks(updatedTasks);
-        localStorage.setItem("tasks", JSON.stringify(updatedTasks));
+    const deleteTask = async (taskId: string) => {
+        const taskDocRef = doc(firestore, "tasks", taskId);
+        await deleteDoc(taskDocRef);
+        setTasks((task) => task.filter((t) => t.taskId !== taskId));
     };
 
-    const deleteTask = (taskId: number) => {
-        const updatedTasks = tasks.filter((task) => task.taskId !== taskId);
-        setTasks(updatedTasks);
-        localStorage.setItem("tasks", JSON.stringify(updatedTasks));
-    };
+    const generateRandomTasks = async () => {
+        const newTasks: TaskType[] = [];
 
-    const generateRandomTasks = () => {
-        const currentTasks = [...tasks];
-        let nextTaskId = getNextTaskId(currentTasks);
-
-        const newTasks = Array.from({ length: 5 }, () => {
+        for (let i = 0; i < 5; i++) {
             const randomIndex = Math.floor(Math.random() * cookingTasks.length);
             const randomColor = proposedColors[Math.floor(Math.random() * proposedColors.length)];
             const { title, description } = cookingTasks[randomIndex];
-            return {
-                taskId: nextTaskId++,
+
+
+            const newTask: Omit<TaskType, "taskId"> = {
                 title,
                 description,
                 addedDate: new Date(),
                 color: randomColor,
-            } as TaskType;
-        });
+            };
 
-        const updatedTasks = [...currentTasks, ...newTasks];
-        setTasks(updatedTasks);
-        localStorage.setItem("tasks", JSON.stringify(updatedTasks));
+            const docRef = await addDoc(collection(firestore, "tasks"), {
+                ...newTask,
+            });
+            const newTaskWithId: TaskType = { ...newTask, taskId: docRef.id };
+            newTasks.push(newTaskWithId);
+        }
+        setTasks([...newTasks, ...tasks])
     };
-
     return { tasks, addTask, updateTask, deleteTask, generateRandomTasks };
 };
 export default useTasks
